@@ -32,7 +32,7 @@ exec_prefix = ${prefix}
 prefix      = /users/drosos/Ipopt-3.12.4/build
 libdir      = ${exec_prefix}/lib
 
-CXX         = mpicxx
+CXX         = mpic++
 CXXFLAGS    = -g -fPIC -fopenmp -m64   -DIPOPT_BUILD -DMATLAB_MEXFILE # -DMWINDEXISINT
 LDFLAGS     = $(CXXFLAGS)   #-static-libgcc -static-libstdc++
 
@@ -64,7 +64,7 @@ OBJS   = demo.o
 SRCDIR = /Users/Juraj/Documents/MATLAB/mex
 VPATH = $(SRCDIR)
 
-all: $(TARGET)
+all: $(TARGET) worker
 
 install: $(TARGET)
 	if test -d $(libdir); then : ; else mkdir $(libdir); fi
@@ -75,14 +75,18 @@ uninstall:
 
 $(TARGET): $(OBJS)
 	make mexopts
-	$(MEX) $(MEXFLAGS) $(LIBS_STATIC) -output $@ $^
+	$(MEX) -g $(MEXFLAGS) $(LIBS_STATIC) -output $@ $^
+
+worker:worker.cpp
+	$(CXX) -std=c++11 -O3 -Wall -W  -I. -o worker worker.cpp
+
 
 %.o: %.cpp
 	$(CXX) $(CXXFLAGS) $(INCL) -I"$(MATLAB_HOME)/extern/include" \
         -o $@ -c $^
 
 clean:
-	rm -f $(OBJS) *.lo $(TARGET)
+	rm -f $(OBJS) *.lo $(TARGET) worker
 
 distclean: clean
 

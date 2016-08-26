@@ -44,8 +44,8 @@ typedef int mwSignedIndex;
 inline void mpi_check(int mpi_call)
 {
     if ((mpi_call) != 0) { 
-        std::cerr << "MPI Error detected!" << std::endl;
-        exit(1);
+        mexPrintf("MPI Error detected!\n");
+        return;
     }
 }
 
@@ -57,7 +57,73 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
     int mpi_rank, mpi_size;
     MPI_Comm_rank(MPI_COMM_WORLD, &mpi_rank);
     MPI_Comm_size(MPI_COMM_WORLD, &mpi_size);
-    mexPrintf("Hello, I am %d out of %d\n", mpi_rank, mpi_size);
+    //mexPrintf("Hello, I am %d out of %d\n", mpi_rank, mpi_size);
+
+    int worker_size; 
+    MPI_Comm everyone_comm;  //intercommunicator to workers
+    const char* worker_program = "worker"; //name of worker binary
+    //const char* worker_program = argv[0];
+    //char worker_args[] = ["100", "10"];
+
+    if (mpi_size != 1)
+    {
+       mexPrintf("Please run with a single process!\n");
+       return;
+    } 
+
+    //determine the size of worker pool
+    worker_size = 4;
+
+    if (worker_size < 1)
+    {
+       mexPrintf("No room to start workers!\n");
+       return;
+    }
+
+   /*  
+    * Now spawn the workers. Note that there is a run-time determination 
+    * of what type of worker to spawn, and presumably this calculation must 
+    * be done at run time and cannot be calculated before starting 
+    * the program. If everything is known when the application is  
+    * first started, it is generally better to start them all at once 
+    * in a single MPI_COMM_WORLD.  
+    */ 
+ 
+   mexPrintf("before spawn\n");
+   MPI_Comm_spawn(worker_program, MPI_ARGV_NULL, worker_size,  
+             MPI_INFO_NULL, 0, MPI_COMM_SELF, &everyone_comm,  
+             MPI_ERRCODES_IGNORE);
+
+   int size_all;
+   MPI_Comm_remote_size(everyone_comm,&size_all);
+   mexPrintf("size_all...%d\n",size_all);
+
+
+  /* 
+    * Parallel code here. The communicator "everyone_comm" can be used 
+    * to communicate with the spawned processes, which have ranks 0,.. 
+    * MPI_worker_size-1 in the remote group of the intercommunicator 
+    * "everyone_comm". 
+    */
+
+   mexPrintf("recieving...\n");
+   int info = 0;
+   for (int i=0; i<worker_size; i++)
+   {
+      MPI_Recv(&info, 1, MPI_INT, i, 0, everyone_comm, MPI_STATUS_IGNORE);
+      mexPrintf("Recieved info: %d\n", info); 
+   }
+
+   // info = worker_size*1000;
+   // for (int i=0; i<worker_size; i++)
+   // {
+   //    MPI_Send(&info, 1, MPI_INT, i, 0, everyone_comm);
+   // }
+
+
+
+
+
 
 
 //declare variables
