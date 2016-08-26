@@ -1,6 +1,9 @@
 /* worker */ 
  
 #include <mpi.h>
+#include <iostream>
+#include <fstream>
+#include <sstream>
 
 using namespace std;
 
@@ -34,6 +37,13 @@ int main(int argc, char *argv[])
    MPI_Comm_size(MPI_COMM_WORLD,&mpi_size);
    MPI_Comm_rank(MPI_COMM_WORLD,&rank);
 
+    std::stringstream ss;
+    ss << rank;
+    std::string filename = "file" + ss.str() + ".txt";
+    std::ofstream file(filename.c_str());
+    file << "Sending......\n" << std::flush;
+
+
    //cout << "[worker]Hello from process " << rank << " from total of " << mpi_size << endl;
 
    //send something to manager using intercomm
@@ -43,6 +53,9 @@ int main(int argc, char *argv[])
    //get something from manager
    //MPI_Recv(&info, 1, MPI_INT, 0, 0, parent_comm, MPI_STATUS_IGNORE);
    //cout << "[worker]Recieved info: " << info << endl; 
+
+    file << "Info sent\n" << std::flush;
+    file.close();
 
  
    MPI_Comm_disconnect(&parent_comm);
