@@ -13,7 +13,6 @@
  * by: Shawn Lankton
  *
  ********************************************************************/
-#include <matrix.h>
 #include <mex.h>   
 #include <iostream>
 

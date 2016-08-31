@@ -13,7 +13,8 @@
 # installation. This is the directory so that in its 'bin/'
 # subdirectory you see all the matlab executables (such as 'matlab',
 # 'mex', etc.)
-MATLAB_HOME = /Applications/MATLAB_R2014b.app
+#MATLAB_HOME = /Applications/MATLAB_R2014b.app
+MATLAB_HOME = /opt/MATLAB/R2014b
 
 # Set the suffix for matlab mex files. The contents of the
 # $(MATLAB_HOME)/extern/examples/mex directory might be able to help
@@ -29,10 +30,10 @@ MEX = $(MATLAB_HOME)/bin/mex
 #############################################################################
 # Do not modify anything below unless you know what you're doing.
 exec_prefix = ${prefix}
-prefix      = /users/drosos/Ipopt-3.12.4/build
+prefix      = /home/kardos/misc/matlabMEX 
 libdir      = ${exec_prefix}/lib
 
-CXX         = mpic++
+CXX         = mpiCC
 CXXFLAGS    = -g -fPIC -fopenmp -m64   -DIPOPT_BUILD -DMATLAB_MEXFILE # -DMWINDEXISINT
 LDFLAGS     = $(CXXFLAGS)   #-static-libgcc -static-libstdc++
 
@@ -61,7 +62,7 @@ MEXFLAGS    = -v $(MEXFLAGCXX) -O CC="$(CXX)" CXX="$(CXX)" LD="$(CXX)"       \
 TARGET = demo.$(MEXSUFFIX)
 OBJS   = demo.o
 
-SRCDIR = /Users/Juraj/Documents/MATLAB/mex
+SRCDIR = /home/kardos/misc/matlabMEX 
 VPATH = $(SRCDIR)
 
 all: $(TARGET) worker
