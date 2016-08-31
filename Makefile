@@ -33,7 +33,7 @@ exec_prefix = ${prefix}
 prefix      = /home/kardos/misc/matlabMEX 
 libdir      = ${exec_prefix}/lib
 
-CXX         = mpiCC
+CXX         = mpic++
 CXXFLAGS    = -g -fPIC -fopenmp -m64   -DIPOPT_BUILD -DMATLAB_MEXFILE # -DMWINDEXISINT
 LDFLAGS     = $(CXXFLAGS)   #-static-libgcc -static-libstdc++
 

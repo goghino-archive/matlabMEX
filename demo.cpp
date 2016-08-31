@@ -60,7 +60,7 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
 
     int worker_size; 
     MPI_Comm everyone_comm;  //intercommunicator to workers
-    const char* worker_program = "worker"; //name of worker binary
+    const char* worker_program = "./worker"; //name of worker binary
     //const char* worker_program = argv[0];
     //char worker_args[] = ["100", "10"];
 
