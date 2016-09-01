@@ -29,15 +29,26 @@ MEX = $(MATLAB_HOME)/bin/mex
 
 #############################################################################
 # Do not modify anything below unless you know what you're doing.
-exec_prefix = ${prefix}
-prefix      = /home/kardos/misc/matlabMEX 
-libdir      = ${exec_prefix}/lib
+exec_prefix = ${prefix} #???
+prefix      = /home/kardos/misc/matlabMEX #??? 
+libdir      = ${exec_prefix}/lib #???  
+mpi_library = /home/kardos/openmpi-2.0.0/lib/ #path to static mpi library
 
-CXX         = mpic++
-CXXFLAGS    = -g -fPIC -fopenmp -m64   -DIPOPT_BUILD -DMATLAB_MEXFILE # -DMWINDEXISINT
-LDFLAGS     = $(CXXFLAGS)   #-static-libgcc -static-libstdc++
+CXX         = g++
+CXXFLAGS    = -g -fPIC -fopenmp -m64 -DIPOPT_BUILD -DMATLAB_MEXFILE # -DMWINDEXISINT
+CXXFLAGS   += -I/home/kardos/openmpi-2.0.0/include -pthread
+LDFLAGS     = -static -L$(mpi_library) #specify that we want statically linked application
 
-# Include directories (we use the CYGPATH_W variables to allow compilation with Windows compilers)
+#provide necessary libraries to statically link with MPI (libmpi.a and its helpers)
+LIBS_STATIC        = -lmpi
+LIBS_STATIC        += -lopen-rte #MPI helpers
+LIBS_STATIC        += -lopen-pal #MPI helpers
+LIBS_STATIC        += -lrt #some system utils
+LIBS_STATIC        += -libverbs #some system utils
+LIBS_STATIC        += -lnuma #???some Linux libs do not have static versions(e.g., libnuma)
+LIBS_STATIC        += -lutil #some dependency from open-pal
+
+
 #INCL = `PKG_CONFIG_PATH=/users/drosos/Ipopt-3.12.4/build/lib64/pkgconfig:/users/drosos/Ipopt-3.12.4/build/lib/pkgconfig:/users/drosos/Ipopt-3.12.4/build/share/pkgconfig:/usr/lib64/pkgconfig pkg-config --cflags ipopt`
 #INCL = -I`$(CYGPATH_W) /users/drosos/Ipopt-3.12.4/build/include/coin` 
 
@@ -45,7 +56,7 @@ LDFLAGS     = $(CXXFLAGS)   #-static-libgcc -static-libstdc++
 #LIBS = `PKG_CONFIG_PATH=/users/drosos/Ipopt-3.12.4/build/lib64/pkgconfig:/users/drosos/Ipopt-3.12.4/build/lib/pkgconfig:/users/drosos/Ipopt-3.12.4/build/share/pkgconfig:/usr/lib64/pkgconfig pkg-config --libs ipopt | sed -e 's/-framework vecLib//g'`
 ##LIBS = -link -libpath:`$(CYGPATH_W) /users/drosos/Ipopt-3.12.4/build/lib` libipopt.lib -L/users/drosos/Libraries/linuxAMD64 -lpardiso500-GNU481-X86-64 -lgfortran -lm  -ldl
 #LIBS = -L/users/drosos/Ipopt-3.12.4/build/lib -lipopt `echo -L/users/drosos/Libraries/linuxAMD64 -lpardiso500-GNU481-X86-64 -lgfortran -lm  -ldl | sed -e 's/-framework vecLib//g'`
-LIBS_STATIC = $(LIBS)
+#LIBS_STATIC = $(LIBS)
 #LIBS_STATIC = $$(echo " $(LIBS) " | sed -e "s| -lgfortran | `gfortran -print-file-name=libgfortran.a` |g" -e "s| -lquadmath | `gfortran -print-file-name=libquadmath.a` |g")
 ##LIBS_STATIC = $$(echo " $(LIBS) " | sed -e 's| -Wl,-Bdynamic,-lmwma57,-Bstatic | -lmwma57 |g')
 # mex doesn't understand -Wl,-Bdynamic,-lmwma57,-Bstatic on Windows
@@ -67,19 +78,12 @@ VPATH = $(SRCDIR)
 
 all: $(TARGET) worker
 
-install: $(TARGET)
-	if test -d $(libdir); then : ; else mkdir $(libdir); fi
-	cp $(SRCDIR)/../ipopt.m $(SRCDIR)/../ipopt_auxdata.m $(TARGET) $(libdir)
-
-uninstall:
-	rm -f $(libdir)/ipopt.m $(libdir)/ipopt_auxdata.m $(libdir)/ipopt.$(MEXSUFFIX)
-
 $(TARGET): $(OBJS)
 	make mexopts
-	$(MEX) -g $(MEXFLAGS) $(LIBS_STATIC) -output $@ $^
+	$(MEX) -L/home/kardos/openmpi-2.0.0/lib/ -g $(MEXFLAGS) -output $@ $^ $(LIBS_STATIC)  
 
 worker:worker.cpp
-	$(CXX) -std=c++11 -O3 -Wall -W  -I. -o worker worker.cpp
+	$(CXX) $(CXXFLAGS) $(LDFLAGS) -std=c++11 -O3 -Wall -W  -I. -o worker worker.cpp $(LIBS_STATIC)
 
 
 %.o: %.cpp
