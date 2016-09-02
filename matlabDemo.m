@@ -6,6 +6,9 @@
 a=[1 1 1; 3 3 3];
 b=[2 2 2; 0 0 0];
 
+a = 3*eye(11);
+b = 2*eye(11);
+
 %call mex function
 [c] = demo(a,b)
 

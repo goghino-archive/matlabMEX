@@ -71,7 +71,7 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
     } 
 
     //determine the size of worker pool
-    worker_size = 4;
+    worker_size = 2;
 
     if (worker_size < 1)
     {
@@ -105,13 +105,13 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
     * "everyone_comm". 
     */
 
-   mexPrintf("recieving...\n");
-   int info = 0;
-   for (int i=0; i<worker_size; i++)
-   {
-      MPI_Recv(&info, 1, MPI_INT, i, 0, everyone_comm, MPI_STATUS_IGNORE);
-      mexPrintf("Recieved info: %d\n", info); 
-   }
+  // mexPrintf("recieving...\n");
+  // int info = 0;
+  // for (int i=0; i<worker_size; i++)
+  // {
+  //    MPI_Recv(&info, 1, MPI_INT, i, 0, everyone_comm, MPI_STATUS_IGNORE);
+  //    mexPrintf("Recieved info: %d\n", info); 
+  // }
 
    // info = worker_size*1000;
    // for (int i=0; i<worker_size; i++)
@@ -119,47 +119,91 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
    //    MPI_Send(&info, 1, MPI_INT, i, 0, everyone_comm);
    // }
 
-
-
-
-
-
-
-//declare variables
+    //declare variables
     mxArray *a_in_m, *b_in_m, *c_out_m, *d_out_m;
     const mwSize *dims;
     double *a, *b, *c, *d;
     int dimx, dimy, numdims;
     int i,j;
 
-//associate inputs
+    //associate inputs
     a_in_m = mxDuplicateArray(prhs[0]);
     b_in_m = mxDuplicateArray(prhs[1]);
 
-//figure out dimensions
+    //figure out dimensions
     dims = mxGetDimensions(prhs[0]);
     numdims = mxGetNumberOfDimensions(prhs[0]);
     dimy = (int)dims[0];
     dimx = (int)dims[1];
-    mexPrintf("dimx: %d dimy %d\n", dimx, dimy);
 
+    //check if input matrices A and B have the same dimensions
+    const mwSize *dims_tmp = mxGetDimensions(prhs[1]);
+    if(dimy != (int)dims_tmp[0] || dimx != (int)dims_tmp[1])
+    {
+        mexPrintf("ERROR: Dimension of input matrices do not match\n");
+        return;
+    }
 
-//associate outputs
+    //associate outputs
     c_out_m = plhs[0] = mxCreateDoubleMatrix(dimy,dimx,mxREAL);
 
-//associate pointers
+    //associate pointers
     a = mxGetPr(a_in_m);
     b = mxGetPr(b_in_m);
     c = mxGetPr(c_out_m);
 
-//do something
-    for (i=0;i<dimx;i++)
+    //send chunks of the input matrices to workers, columnwise storage
+    int size_x = dimx / worker_size;
+    int counter = 0;
+    for (int i=0; i<worker_size; i++)
     {
-        for (j=0;j<dimy;j++)
-        {
-            c[i*dimy+j] = a[i*dimy+j] + b[i*dimy+j]; 
-        }
+        //distribute the remainder - partition x dimension and send it as a single chunk
+        int size = size_x;
+        if(i < (dimx % worker_size))
+            size++;
+        size *= dimy;
+
+        //send the size of the data first
+        MPI_Send(&size, 1, MPI_INT, i, 0, everyone_comm);
+
+        //send actual data
+        MPI_Send(&a[counter], size, MPI_DOUBLE, i, 0, everyone_comm);
+        MPI_Send(&b[counter], size, MPI_DOUBLE, i, 1, everyone_comm);
+
+        //move the pointer to the next chunk
+        counter += size;
+
     }
+
+    if (counter != dimx*dimy)
+    {
+        mexPrintf("ERROR: size of the data sent do not match actual data size\n");
+    }
+
+    //colect the result from workers
+    counter = 0;
+    for (int i=0; i<worker_size; i++)
+    {
+        //distribute the remainder - partition x dimension and send it as a single chunk
+        int size = size_x;
+        if(i < (dimx % worker_size))
+            size++;
+        size *= dimy;
+
+        MPI_Recv(&c[counter], size, MPI_DOUBLE, i, 0, everyone_comm, MPI_STATUS_IGNORE);
+
+        //move the pointer to the next chunk
+        counter += size;
+
+    }
+    
+   // for (i=0;i<dimx;i++)
+   // {
+   //     for (j=0;j<dimy;j++)
+   //     {
+   //         c[i*dimy+j] = a[i*dimy+j] + b[i*dimy+j]; 
+   //     }
+   // }
 
     MPI_Finalize();
 
