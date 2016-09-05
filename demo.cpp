@@ -50,19 +50,22 @@ inline void mpi_check(int mpi_call)
 
 void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
 {
+    //check number of arguments
+    if (nrhs != 3)
+    {
+            mexErrMsgIdAndTxt("MyToolbox:arrayProduct:nrhs",
+                                          "Three inputs required.");
+    }
+
+    if (nlhs != 1) {
+            mexErrMsgIdAndTxt("MyToolbox:arrayProduct:nlhs",
+                                         "One output required.");
+    }
 
     mpi_check(MPI_Init(NULL, NULL));
 
-    int mpi_rank, mpi_size;
-    MPI_Comm_rank(MPI_COMM_WORLD, &mpi_rank);
+    int  mpi_size;
     MPI_Comm_size(MPI_COMM_WORLD, &mpi_size);
-    //mexPrintf("Hello, I am %d out of %d\n", mpi_rank, mpi_size);
-
-    int worker_size; 
-    MPI_Comm everyone_comm;  //intercommunicator to workers
-    const char* worker_program = "./worker"; //name of worker binary
-    //const char* worker_program = argv[0];
-    //char worker_args[] = ["100", "10"];
 
     if (mpi_size != 1)
     {
@@ -70,9 +73,17 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
        return;
     } 
 
-    //determine the size of worker pool
-    worker_size = 2;
-
+    int worker_size; 
+    MPI_Comm everyone_comm;  //intercommunicator to workers
+    const char* worker_program = "./worker"; //name of worker binary
+    //char worker_args[] = ["100", "10"];
+    
+    //make sure the worker_size argument is scalar
+    if( !mxIsDouble(prhs[2]) || mxGetNumberOfElements(prhs[2]) != 1 ) {
+            mexErrMsgIdAndTxt("MyToolbox:arrayProduct:notScalar",
+                                          "mpi_size must be a scalar.");
+    }
+    worker_size = (int)mxGetScalar(prhs[2]);
     if (worker_size < 1)
     {
        mexPrintf("No room to start workers!\n");
@@ -105,17 +116,17 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
     * "everyone_comm". 
     */
 
-    //declare variables
-    mxArray *a_in_m, *b_in_m, *c_out_m, *d_out_m;
+    //declare MEX variables
+    mxArray *a_in_m, *b_in_m, *c_out_m;
     const mwSize *dims;
     double *a, *b, *c, *d;
     int dimx, dimy, numdims;
     int i,j;
-
+    
     //associate inputs
     a_in_m = mxDuplicateArray(prhs[0]);
     b_in_m = mxDuplicateArray(prhs[1]);
-
+    
     //figure out dimensions
     dims = mxGetDimensions(prhs[0]);
     numdims = mxGetNumberOfDimensions(prhs[0]);
