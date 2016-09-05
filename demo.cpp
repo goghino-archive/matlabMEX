@@ -88,14 +88,14 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
     * in a single MPI_COMM_WORLD.  
     */ 
  
-   mexPrintf("before spawn\n");
+   //mexPrintf("before spawn\n");
    MPI_Comm_spawn(worker_program, MPI_ARGV_NULL, worker_size,  
              MPI_INFO_NULL, 0, MPI_COMM_SELF, &everyone_comm,  
              MPI_ERRCODES_IGNORE);
 
    int size_all;
    MPI_Comm_remote_size(everyone_comm,&size_all);
-   mexPrintf("size_all...%d\n",size_all);
+   //mexPrintf("size_all...%d\n",size_all);
 
 
   /* 
@@ -104,20 +104,6 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
     * MPI_worker_size-1 in the remote group of the intercommunicator 
     * "everyone_comm". 
     */
-
-  // mexPrintf("recieving...\n");
-  // int info = 0;
-  // for (int i=0; i<worker_size; i++)
-  // {
-  //    MPI_Recv(&info, 1, MPI_INT, i, 0, everyone_comm, MPI_STATUS_IGNORE);
-  //    mexPrintf("Recieved info: %d\n", info); 
-  // }
-
-   // info = worker_size*1000;
-   // for (int i=0; i<worker_size; i++)
-   // {
-   //    MPI_Send(&info, 1, MPI_INT, i, 0, everyone_comm);
-   // }
 
     //declare variables
     mxArray *a_in_m, *b_in_m, *c_out_m, *d_out_m;
@@ -197,14 +183,6 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
 
     }
     
-   // for (i=0;i<dimx;i++)
-   // {
-   //     for (j=0;j<dimy;j++)
-   //     {
-   //         c[i*dimy+j] = a[i*dimy+j] + b[i*dimy+j]; 
-   //     }
-   // }
-
     MPI_Finalize();
 
 

@@ -37,38 +37,52 @@ int main(int argc, char *argv[])
    MPI_Comm_size(MPI_COMM_WORLD,&mpi_size);
    MPI_Comm_rank(MPI_COMM_WORLD,&rank);
 
+#ifdef DEBUG
     std::stringstream ss;
     ss << rank;
     std::string filename = "file" + ss.str() + ".txt";
     std::ofstream file(filename.c_str());
     file << "[worker]Hello from process " << rank << " from total of " << mpi_size << endl << std::flush;
+#endif
 
-
-   //get data from manager
+#ifdef DEBUG
    file << "Receiving......\n" << std::flush;
+#endif
+   
+   //get data from manager
    int size;
    MPI_Recv(&size, 1, MPI_INT, 0, 0, parent_comm, MPI_STATUS_IGNORE);
+#ifdef DEBUG
    file << "The local size of the data is "<< size << std::endl << std::flush;
+#endif
    double *a = new double[size];
    double *b = new double[size];
    double *c = new double[size];
    MPI_Recv(a, size, MPI_DOUBLE, 0, 0, parent_comm, MPI_STATUS_IGNORE);
    MPI_Recv(b, size, MPI_DOUBLE, 0, 1, parent_comm, MPI_STATUS_IGNORE);
+   
+#ifdef DEBUG   
+   file << "Computing....\n" << std::flush;
+#endif
 
    //compute local portion of the result
-   file << "Computing....\n" << std::flush;
    for (int i = 0; i < size; i++)
    {
        c[i] = a[i] + b[i];
    }
 
-   //send something to manager using intercomm
+
+#ifdef DEBUG
    file << "Sending......\n" << std::flush;
+#endif
+
+   //send something to manager using intercomm
    MPI_Send(c, size, MPI_DOUBLE, 0, 0, parent_comm);
 
-
+#ifdef DEBUG
     file << "Info sent\n" << std::flush;
     file.close();
+#endif
 
     delete [] a;
     delete [] b;

@@ -40,7 +40,7 @@ CXXFLAGS   += -I/home/kardos/openmpi-2.0.0/include -pthread
 LDFLAGS     = -static -L$(mpi_library) #specify that we want statically linked application
 
 #provide necessary libraries to statically link with MPI (libmpi.a and its helpers)
-LIBS_STATIC        = -lmpi
+LIBS_STATIC        =  -lmpi
 LIBS_STATIC        += -lopen-rte #MPI helpers
 LIBS_STATIC        += -lopen-pal #MPI helpers
 LIBS_STATIC        += -lrt #some system utils
