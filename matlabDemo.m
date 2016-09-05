@@ -10,7 +10,8 @@ a = 3*eye(11);
 b = 2*eye(11);
 
 %call mex function
-[c] = demo(a,b)
+mpi_size = 2;
+[c] = demo(a,b,mpi_size)
 
 %run matlab from terminal at mac
 %$ /Applications/MATLAB_R2014b.app/bin/matlab -nojvm -nodisplay -nosplash

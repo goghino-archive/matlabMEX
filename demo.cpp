@@ -43,7 +43,8 @@ typedef int mwSignedIndex;
 inline void mpi_check(int mpi_call)
 {
     if ((mpi_call) != 0) { 
-        mexPrintf("MPI Error detected!\n");
+        mexErrMsgIdAndTxt("MyToolbox:arrayProduct:MPI",
+                "MPI error detected\n.");
         return;
     }
 }
@@ -53,13 +54,15 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
     //check number of arguments
     if (nrhs != 3)
     {
-            mexErrMsgIdAndTxt("MyToolbox:arrayProduct:nrhs",
-                                          "Three inputs required.");
+         mexErrMsgIdAndTxt("MyToolbox:arrayProduct:nrhs",
+                 "Three inputs required.");
+         return;
     }
 
     if (nlhs != 1) {
-            mexErrMsgIdAndTxt("MyToolbox:arrayProduct:nlhs",
-                                         "One output required.");
+         mexErrMsgIdAndTxt("MyToolbox:arrayProduct:nlhs",
+                 "One output required.");
+         return;
     }
 
     mpi_check(MPI_Init(NULL, NULL));
@@ -69,8 +72,9 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
 
     if (mpi_size != 1)
     {
-       mexPrintf("Please run with a single process!\n");
-       return;
+        mexErrMsgIdAndTxt("MyToolbox:arrayProduct:mpiSize",
+                "Please run with a single process!");
+        return;
     } 
 
     int worker_size; 
@@ -80,14 +84,18 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
     
     //make sure the worker_size argument is scalar
     if( !mxIsDouble(prhs[2]) || mxGetNumberOfElements(prhs[2]) != 1 ) {
-            mexErrMsgIdAndTxt("MyToolbox:arrayProduct:notScalar",
-                                          "mpi_size must be a scalar.");
+        mexErrMsgIdAndTxt("MyToolbox:arrayProduct:notScalar",
+                "mpi_size must be a scalar.");
+        return;
     }
+
+    //get size of the worker pool
     worker_size = (int)mxGetScalar(prhs[2]);
     if (worker_size < 1)
     {
-       mexPrintf("No room to start workers!\n");
-       return;
+        mexErrMsgIdAndTxt("MyToolbox:arrayProduct:mpiSize",
+                "mpi_size must be greater than 0!");
+        return;
     }
 
    /*  
@@ -117,17 +125,20 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
     */
 
     //declare MEX variables
-    mxArray *a_in_m, *b_in_m, *c_out_m;
+    mxArray *c_out_m;
     const mwSize *dims;
-    double *a, *b, *c, *d;
+    double *a, *b, *c;
     int dimx, dimy, numdims;
-    int i,j;
-    
-    //associate inputs
-    a_in_m = mxDuplicateArray(prhs[0]);
-    b_in_m = mxDuplicateArray(prhs[1]);
-    
-    //figure out dimensions
+   
+    //check type of input matrices, must be double
+    if (!mxIsDouble(prhs[0]) || !mxIsDouble(prhs[1]))
+    {
+        mexErrMsgIdAndTxt("MyToolbox:arrayProduct:notDouble",
+                                      "Input matrices must be of type double.");
+        return;
+    }
+
+    //figure out dimensions of input matrices
     dims = mxGetDimensions(prhs[0]);
     numdims = mxGetNumberOfDimensions(prhs[0]);
     dimy = (int)dims[0];
@@ -137,7 +148,8 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
     const mwSize *dims_tmp = mxGetDimensions(prhs[1]);
     if(dimy != (int)dims_tmp[0] || dimx != (int)dims_tmp[1])
     {
-        mexPrintf("ERROR: Dimension of input matrices do not match\n");
+        mexErrMsgIdAndTxt("MyToolbox:arrayProduct:dimensionMismatch",
+                "Dimensions of the input matrices do not match\n");
         return;
     }
 
@@ -145,8 +157,8 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
     c_out_m = plhs[0] = mxCreateDoubleMatrix(dimy,dimx,mxREAL);
 
     //associate pointers
-    a = mxGetPr(a_in_m);
-    b = mxGetPr(b_in_m);
+    a = mxGetPr(prhs[0]);
+    b = mxGetPr(prhs[1]);
     c = mxGetPr(c_out_m);
 
     //send chunks of the input matrices to workers, columnwise storage
@@ -174,7 +186,9 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
 
     if (counter != dimx*dimy)
     {
-        mexPrintf("ERROR: size of the data sent do not match actual data size\n");
+        mexErrMsgIdAndTxt("MyToolbox:arrayProduct:internalError",
+                "Size of the data sent do not match actual data size\n");
+        return;
     }
 
     //colect the result from workers
