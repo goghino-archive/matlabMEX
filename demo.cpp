@@ -16,7 +16,11 @@
 #include <mex.h>   
 #include <iostream>
 
- #include <mpi.h>
+#include <mpi.h>
+
+#ifdef PERF_METRIC
+//#include <ctime>
+#endif
 
 /* Definitions to keep compatibility with earlier versions of ML */
 #ifndef MWSIZE_MAX
@@ -161,6 +165,14 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
     b = mxGetPr(prhs[1]);
     c = mxGetPr(c_out_m);
 
+#ifdef PERF_METRIC
+    //clock_t clockstart;
+    //clock_t cputime;
+    //clockstart = clock();
+
+    double start, finish;
+    start=MPI_Wtime();
+#endif
     //send chunks of the input matrices to workers, columnwise storage
     int size_x = dimx / worker_size;
     int counter = 0;
@@ -207,6 +219,14 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
         counter += size;
 
     }
+
+#ifdef PERF_METRIC
+    //cputime = ((double)clock()-clockstart)/(double)CLOCKS_PER_SEC;
+    //mexPrintf("Time: %f sec\n", cputime);
+
+    finish=MPI_Wtime(); /*stop timer*/
+    mexPrintf("Parallel Elapsed time: %f seconds\n", finish-start); 
+#endif
     
     MPI_Finalize();
 

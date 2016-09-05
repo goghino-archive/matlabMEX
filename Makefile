@@ -35,7 +35,7 @@ libdir      = ${exec_prefix}/lib #???
 mpi_library = /home/kardos/openmpi-2.0.0/lib/ #path to static mpi library
 
 CXX         = g++
-CXXFLAGS    = -g -fPIC -fopenmp -m64 -DIPOPT_BUILD -DMATLAB_MEXFILE # -DMWINDEXISINT
+CXXFLAGS    = -g -fPIC -fopenmp -m64 -DPERF_METRIC -DMATLAB_MEXFILE # -DMWINDEXISINT
 CXXFLAGS   += -I/home/kardos/openmpi-2.0.0/include -pthread
 LDFLAGS     = -static -L$(mpi_library) #specify that we want statically linked application
 
@@ -64,7 +64,6 @@ LIBS_STATIC        += -lutil #some dependency from open-pal
 # The following is necessary under cygwin, if native compilers are used
 CYGPATH_W = echo
 
-#MEXFLAGCXX = 
 MEXFLAGCXX = -cxx
 MEXFLAGS    = -v $(MEXFLAGCXX) -O CC="$(CXX)" CXX="$(CXX)" LD="$(CXX)"       \
               COPTIMFLAGS="$(CXXFLAGS)" CXXOPTIMFLAGS="$(CXXFLAGS)" \
