@@ -13,9 +13,17 @@
 # installation. This is the directory so that in its 'bin/'
 # subdirectory you see all the matlab executables (such as 'matlab',
 # 'mex', etc.)
-#MATLAB_HOME = /Applications/MATLAB_R2014b.app
-#MATLAB_HOME = /opt/MATLAB/R2014b
+
+HOST=$(shell hostname)
+ifeq ($(HOST),archimedes)
+mpi_base = /home/kardos/openmpi
+MATLAB_HOME = /opt/MATLAB/R2014b
+else
+mpi_base = ~/privateapps/openmpi/2.0.1
 MATLAB_HOME = /apps/matlab/R2016a
+LIB_SLURM = -lslurm
+PRELOAD = "LD_PRELOAD=/usr/lib64/libslurm.so"
+endif
 
 # Set the suffix for matlab mex files. The contents of the
 # $(MATLAB_HOME)/extern/examples/mex directory might be able to help
@@ -32,7 +40,7 @@ MEX = $(MATLAB_HOME)/bin/mex
 prefix      = $(CURDIR) #??? 
 exec_prefix = ${prefix} #???
 libdir      = ${exec_prefix}/lib #???  
-mpi_base = ~/privateapps/openmpi/2.0.1
+
 mpi_library = $(mpi_base)/lib
 
 
@@ -67,7 +75,7 @@ all: $(TARGET) worker
 
 $(TARGET): $(OBJS)
 	make mexopts
-	$(MEX) -L${mpi_library} -g $(MEXFLAGS) -output $@ $^ -lmpi -lslurm
+	$(MEX) -L${mpi_library} -g $(MEXFLAGS) -output $@ $^ -lmpi $(LIB_SLURM)
 
 worker: worker.cpp
 	$(CXX) $(CXXFLAGS) $(LDFLAGS) -std=c++11 -O3 -Wall -W  -I. -o worker worker.cpp -lmpi
@@ -84,9 +92,13 @@ print_pwd:
 	echo $(CURDIR)
 	echo $(shell dirname $(realpath $(lastword $(MAKEFILE_LIST))))
 
+hostname:
+	echo $(shell hostname)
+
 run:
 	LD_LIBRARY_PATH=$$LD_LIBRARY_PATH:$(MATLAB_HOME)/bin/glnxa64/ \
-	LD_PRELOAD=/usr/lib64/libslurm.so \
+	LD_LIBRARY_PATH=$$LD_LIBRARY_PATH:$(mpi_library) \
+	$(PRELOAD) \
 	matlab -nojvm -nodisplay -nosplash -r "matlabDemo"
 
 distclean: clean
