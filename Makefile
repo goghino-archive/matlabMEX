@@ -22,7 +22,7 @@ else
 mpi_base = ~/privateapps/openmpi/2.0.1
 MATLAB_HOME = /apps/matlab/R2016a
 LIB_SLURM = -lslurm
-PRELOAD = "LD_PRELOAD=/usr/lib64/libslurm.so"
+PRELOAD = LD_PRELOAD=/usr/lib64/libslurm.so
 endif
 
 # Set the suffix for matlab mex files. The contents of the

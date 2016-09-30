@@ -5,7 +5,10 @@
     OpenMPI was configured as following: --prefix=${INSTALLDIR} --enable-mpi-fortran=all --with-pmi --disable-dlopen
     The important flag when using MEX is "--disable-dlopen" which specifies that  all plugins will be slurped into Open
     MPI's libraries and it will cause that Open MPI will not look for / open any DSOs at run time 
-    (https://www.open-mpi.org/faq/?category=building#avoid-dso).
+    (https://www.open-mpi.org/faq/?category=building#avoid-dso). To elaborate more on this: Open MPI uses a bunch of
+    plugins for its functionality.  When you dlopen libmpi in a private namespace (like Matlab does),
+    and then libmpi tries to dlopen its  plugins, the plugins can't find the symbols that they need in the main libmpi 
+    library (because they're in a private namespace).
 
 2. Export path to matlab library and to slurm dependency
 
