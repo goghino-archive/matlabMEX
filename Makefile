@@ -14,7 +14,8 @@
 # subdirectory you see all the matlab executables (such as 'matlab',
 # 'mex', etc.)
 #MATLAB_HOME = /Applications/MATLAB_R2014b.app
-MATLAB_HOME = /opt/MATLAB/R2014b
+#MATLAB_HOME = /opt/MATLAB/R2014b
+MATLAB_HOME = /apps/matlab/R2016a
 
 # Set the suffix for matlab mex files. The contents of the
 # $(MATLAB_HOME)/extern/examples/mex directory might be able to help
@@ -25,19 +26,18 @@ MEXSUFFIX   = mexmaci64
 # just "mex". But it also may be something like
 # /user/local/R2006b/bin/mex if "mex" doesn't work.
 MEX = $(MATLAB_HOME)/bin/mex
-#MEX = "$(MATLAB_HOME)/sys/perl/win32/bin/perl" "`$(CYGPATH_W) "$(MATLAB_HOME)/bin/mex.pl"`"
 
 #############################################################################
 # Do not modify anything below unless you know what you're doing.
+prefix      = $(CURDIR) #??? 
 exec_prefix = ${prefix} #???
-prefix      = /home/kardos/misc/matlabMEX #??? 
 libdir      = ${exec_prefix}/lib #???  
-mpi_library = /home/kardos/openmpi-2.0.0/lib/ #path to static mpi library
+mpi_library = ~/privateapps/openmpi/2.0.1/lib/ #path to static mpi library
 
 CXX         = g++
 CXXFLAGS    = -g -fPIC -fopenmp -m64 -DIPOPT_BUILD -DMATLAB_MEXFILE # -DMWINDEXISINT
-CXXFLAGS   += -I/home/kardos/openmpi-2.0.0/include -pthread
-LDFLAGS     = -static -L$(mpi_library) #specify that we want statically linked application
+CXXFLAGS   += -I~/privateapps/openmpi/2.0.1/include -pthread
+LDFLAGS     = -L$(mpi_library) #specify that we want statically linked application
 
 #provide necessary libraries to statically link with MPI (libmpi.a and its helpers)
 LIBS_STATIC        =  -lmpi
@@ -80,10 +80,10 @@ all: $(TARGET) worker
 
 $(TARGET): $(OBJS)
 	make mexopts
-	$(MEX) -L/home/kardos/openmpi-2.0.0/lib/ -g $(MEXFLAGS) -output $@ $^ $(LIBS_STATIC)  
+	$(MEX) -L~/privateapps/openmpi/2.0.1/lib -g $(MEXFLAGS) -output $@ $^ -lmpi -lslurm
 
-worker:worker.cpp
-	$(CXX) $(CXXFLAGS) $(LDFLAGS) -std=c++11 -O3 -Wall -W  -I. -o worker worker.cpp $(LIBS_STATIC)
+worker: worker.cpp
+	$(CXX) $(CXXFLAGS) $(LDFLAGS) -std=c++11 -O3 -Wall -W  -I. -o worker worker.cpp -lmpi
 
 
 %.o: %.cpp
@@ -92,6 +92,15 @@ worker:worker.cpp
 
 clean:
 	rm -f $(OBJS) *.lo $(TARGET) worker
+	
+print_pwd:
+	echo $(CURDIR)
+	echo $(shell dirname $(realpath $(lastword $(MAKEFILE_LIST))))
+
+run:
+	LD_LIBRARY_PATH=$$LD_LIBRARY_PATH:/apps/matlab/R2016a/bin/glnxa64/ \
+	LD_PRELOAD=/usr/lib64/libslurm.so \
+	matlab -nojvm -nodisplay -nosplash -r "matlabDemo"
 
 distclean: clean
 
