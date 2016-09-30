@@ -32,11 +32,13 @@ MEX = $(MATLAB_HOME)/bin/mex
 prefix      = $(CURDIR) #??? 
 exec_prefix = ${prefix} #???
 libdir      = ${exec_prefix}/lib #???  
-mpi_library = ~/privateapps/openmpi/2.0.1/lib/ #path to static mpi library
+mpi_base = ~/privateapps/openmpi/2.0.1
+mpi_library = $(mpi_base)/lib
+
 
 CXX         = g++
 CXXFLAGS    = -g -fPIC -fopenmp -m64 -DIPOPT_BUILD -DMATLAB_MEXFILE # -DMWINDEXISINT
-CXXFLAGS   += -I~/privateapps/openmpi/2.0.1/include -pthread
+CXXFLAGS   += -I$(mpi_base)/include -pthread
 LDFLAGS     = -L$(mpi_library) #specify that we want statically linked application
 
 #provide necessary libraries to statically link with MPI (libmpi.a and its helpers)
@@ -48,20 +50,6 @@ LIBS_STATIC        += -libverbs #some system utils
 LIBS_STATIC        += -lnuma #???some Linux libs do not have static versions(e.g., libnuma)
 LIBS_STATIC        += -lutil #some dependency from open-pal
 
-
-#INCL = `PKG_CONFIG_PATH=/users/drosos/Ipopt-3.12.4/build/lib64/pkgconfig:/users/drosos/Ipopt-3.12.4/build/lib/pkgconfig:/users/drosos/Ipopt-3.12.4/build/share/pkgconfig:/usr/lib64/pkgconfig pkg-config --cflags ipopt`
-#INCL = -I`$(CYGPATH_W) /users/drosos/Ipopt-3.12.4/build/include/coin` 
-
-# Linker flags
-#LIBS = `PKG_CONFIG_PATH=/users/drosos/Ipopt-3.12.4/build/lib64/pkgconfig:/users/drosos/Ipopt-3.12.4/build/lib/pkgconfig:/users/drosos/Ipopt-3.12.4/build/share/pkgconfig:/usr/lib64/pkgconfig pkg-config --libs ipopt | sed -e 's/-framework vecLib//g'`
-##LIBS = -link -libpath:`$(CYGPATH_W) /users/drosos/Ipopt-3.12.4/build/lib` libipopt.lib -L/users/drosos/Libraries/linuxAMD64 -lpardiso500-GNU481-X86-64 -lgfortran -lm  -ldl
-#LIBS = -L/users/drosos/Ipopt-3.12.4/build/lib -lipopt `echo -L/users/drosos/Libraries/linuxAMD64 -lpardiso500-GNU481-X86-64 -lgfortran -lm  -ldl | sed -e 's/-framework vecLib//g'`
-#LIBS_STATIC = $(LIBS)
-#LIBS_STATIC = $$(echo " $(LIBS) " | sed -e "s| -lgfortran | `gfortran -print-file-name=libgfortran.a` |g" -e "s| -lquadmath | `gfortran -print-file-name=libquadmath.a` |g")
-##LIBS_STATIC = $$(echo " $(LIBS) " | sed -e 's| -Wl,-Bdynamic,-lmwma57,-Bstatic | -lmwma57 |g')
-# mex doesn't understand -Wl,-Bdynamic,-lmwma57,-Bstatic on Windows
-
-# The following is necessary under cygwin, if native compilers are used
 CYGPATH_W = echo
 
 #MEXFLAGCXX = 
@@ -73,14 +61,14 @@ MEXFLAGS    = -v $(MEXFLAGCXX) -O CC="$(CXX)" CXX="$(CXX)" LD="$(CXX)"       \
 TARGET = demo.$(MEXSUFFIX)
 OBJS   = demo.o
 
-SRCDIR = /home/kardos/misc/matlabMEX 
+SRCDIR = ${prefix} 
 VPATH = $(SRCDIR)
 
 all: $(TARGET) worker
 
 $(TARGET): $(OBJS)
 	make mexopts
-	$(MEX) -L~/privateapps/openmpi/2.0.1/lib -g $(MEXFLAGS) -output $@ $^ -lmpi -lslurm
+	$(MEX) -L${mpi_library} -g $(MEXFLAGS) -output $@ $^ -lmpi -lslurm
 
 worker: worker.cpp
 	$(CXX) $(CXXFLAGS) $(LDFLAGS) -std=c++11 -O3 -Wall -W  -I. -o worker worker.cpp -lmpi
@@ -98,7 +86,7 @@ print_pwd:
 	echo $(shell dirname $(realpath $(lastword $(MAKEFILE_LIST))))
 
 run:
-	LD_LIBRARY_PATH=$$LD_LIBRARY_PATH:/apps/matlab/R2016a/bin/glnxa64/ \
+	LD_LIBRARY_PATH=$$LD_LIBRARY_PATH:$(MATLAB_HOME)/bin/glnxa64/ \
 	LD_PRELOAD=/usr/lib64/libslurm.so \
 	matlab -nojvm -nodisplay -nosplash -r "matlabDemo"
 
