@@ -110,15 +110,17 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
     * first started, it is generally better to start them all at once 
     * in a single MPI_COMM_WORLD.  
     */ 
+     
+   MPI_Info host_info = MPI_INFO_NULL;
+   // MPI_Info_create(&host_info); 
+   // MPI_Info_set(host_info, "host", "icsnode13,icsnode15");
  
-   //mexPrintf("before spawn\n");
    MPI_Comm_spawn(worker_program, MPI_ARGV_NULL, worker_size,  
-             MPI_INFO_NULL, 0, MPI_COMM_SELF, &everyone_comm,  
+             host_info, 0, MPI_COMM_SELF, &everyone_comm,  
              MPI_ERRCODES_IGNORE);
 
    int size_all;
    MPI_Comm_remote_size(everyone_comm,&size_all);
-   //mexPrintf("size_all...%d\n",size_all);
 
 
   /* 
