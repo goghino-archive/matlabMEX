@@ -18,6 +18,13 @@
 
 3. $ make 
 
-4. $ matlab -nojvm -nodisplay -nosplash -r "matlabDemo"
+4. Set parameter for MPI modules
+
+   kardos@icsmaster01:$ cat ~/.openmpi/mca-params.conf
+   btl_tcp_if_include = eth0
+   pml = ob1
+   btl = tcp,sm,self
+
+5. $ matlab -nojvm -nodisplay -nosplash -r "matlabDemo"
     or
    $ make run
