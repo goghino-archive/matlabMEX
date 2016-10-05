@@ -10,21 +10,28 @@
     and then libmpi tries to dlopen its  plugins, the plugins can't find the symbols that they need in the main libmpi 
     library (because they're in a private namespace).
 
-2. Export path to matlab library and to slurm dependency
+2. Set up MATLAB's library preloading
 
-   kardos@archimedes:~/misc/matlabMEX$ export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/home/kardos/openmpi-2.0.0/lib/
-   kardos@icsmaster01 (master):~/misc/matlabMEX$ export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/apps/matlab/R2016a/bin/glnxa64/
-   kardos@icsmaster01 (master):~/misc/matlabMEX$ export LD_PRELOAD=/usr/lib64/libslurm.so
+    Copy matlab .rc script into $HOME
+    cp $MATLAB_HOME/bin/.matlab7rc.sh ~
+
+    Set LDPATH_PREFIX='/apps/gcc/gcc-6.1.0/lib64/' to point to location where libstdc++.so.6 is located.
+    This prevents matlab to load its version of the library from $MATLAB_HOME/sys/os/glnxa64/ directory.
 
 3. $ make 
 
 4. Set parameter for MPI modules
 
    kardos@icsmaster01:$ cat ~/.openmpi/mca-params.conf
-   btl_tcp_if_include = eth0
+   #btl_tcp_if_include = eth0
+   #btl = tcp,sm,self
    pml = ob1
-   btl = tcp,sm,self
 
-5. $ matlab -nojvm -nodisplay -nosplash -r "matlabDemo"
-    or
-   $ make run
+5. $ salloc -N <nworkers + 1>
+
+6. $ make run
+
+   LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/apps/matlab/R2016a/bin/glnxa64/ \
+   LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/home/kardos/privateapps/openmpi/2.0.1/lib \
+   LD_PRELOAD="/usr/lib64/libslurm.so /apps/gcc/gcc-6.1.0/lib64/libstdc++.so.6" \
+   matlab -nojvm -nodisplay -nosplash -r "matlabDemo"

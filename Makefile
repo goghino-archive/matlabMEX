@@ -19,10 +19,13 @@ ifeq ($(HOST),archimedes)
 mpi_base = /home/kardos/openmpi
 MATLAB_HOME = /opt/MATLAB/R2014b
 else
-mpi_base = ~/privateapps/openmpi/2.0.1
+mpi_base = $(OPENMPI_DIR)
 MATLAB_HOME = /apps/matlab/R2016a
 LIB_SLURM = -lslurm
-PRELOAD = LD_PRELOAD=/usr/lib64/libslurm.so
+PRELOAD = LD_PRELOAD="/usr/lib64/libslurm.so"
+#PRELOAD = LD_PRELOAD="/usr/lib64/libslurm.so /apps/gcc/gcc-6.1.0/lib64/libstdc++.so.6"
+#also modify matlab's .rc script $vim ~/.matlab7rc.sh and
+#set up LDPATH_PREFIX='/apps/gcc/gcc-6.1.0/lib64/'
 endif
 
 # Set the suffix for matlab mex files. The contents of the
@@ -47,7 +50,7 @@ mpi_library = $(mpi_base)/lib
 CXX         = g++
 CXXFLAGS    = -g -fPIC -fopenmp -m64 -DIPOPT_BUILD -DMATLAB_MEXFILE # -DMWINDEXISINT
 CXXFLAGS   += -I$(mpi_base)/include -pthread
-LDFLAGS     = -L$(mpi_library)
+LFLAGS     = -L$(mpi_library)
 
 #provide necessary libraries to statically link with MPI (libmpi.a and its helpers)
 LIBS_STATIC        =  -lmpi
@@ -63,7 +66,7 @@ CYGPATH_W = echo
 MEXFLAGCXX = -cxx
 MEXFLAGS    = -v $(MEXFLAGCXX) -O CC="$(CXX)" CXX="$(CXX)" LD="$(CXX)"       \
               COPTIMFLAGS="$(CXXFLAGS)" CXXOPTIMFLAGS="$(CXXFLAGS)" \
-              LDOPTIMFLAGS="$(LDFLAGS)" 
+              LDOPTIMFLAGS="$(LFLAGS)" 
 
 TARGET = demo.$(MEXSUFFIX)
 OBJS   = demo.o
@@ -78,7 +81,7 @@ $(TARGET): $(OBJS)
 	$(MEX) -L${mpi_library} -g $(MEXFLAGS) -output $@ $^ -lmpi $(LIB_SLURM)
 
 worker: worker.cpp
-	$(CXX) $(CXXFLAGS) $(LDFLAGS) -std=c++11 -O3 -Wall -W  -I. -o worker worker.cpp -lmpi
+	$(CXX) $(CXXFLAGS) $(LFLAGS) -std=c++11 -O3 -Wall -W  -I. -o worker worker.cpp -lmpi
 
 
 %.o: %.cpp
@@ -96,7 +99,6 @@ hostname:
 	echo $(shell hostname)
 
 run:
-	LD_LIBRARY_PATH=$$LD_LIBRARY_PATH:$(MATLAB_HOME)/bin/glnxa64/ \
 	LD_LIBRARY_PATH=$$LD_LIBRARY_PATH:$(mpi_library) \
 	$(PRELOAD) \
 	matlab -nojvm -nodisplay -nosplash -r "matlabDemo"
