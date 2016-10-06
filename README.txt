@@ -17,14 +17,15 @@
 
     Set LDPATH_PREFIX='/apps/gcc/gcc-6.1.0/lib64/' to point to location where libstdc++.so.6 is located.
     This prevents matlab to load its version of the library from $MATLAB_HOME/sys/os/glnxa64/ directory.
+    (or alternatively use hack with LD_PRELOAD in step 6, which is redundant in this case).
 
 3. $ make 
 
 4. Set parameter for MPI modules
 
    kardos@icsmaster01:$ cat ~/.openmpi/mca-params.conf
-   #btl_tcp_if_include = eth0
-   #btl = tcp,sm,self
+   btl_tcp_if_include = eth0
+   btl = tcp,sm,self
    pml = ob1
 
 5. $ salloc -N <nworkers + 1>
@@ -34,4 +35,6 @@
    LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/apps/matlab/R2016a/bin/glnxa64/ \
    LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/home/kardos/privateapps/openmpi/2.0.1/lib \
    LD_PRELOAD="/usr/lib64/libslurm.so /apps/gcc/gcc-6.1.0/lib64/libstdc++.so.6" \
-   matlab -nojvm -nodisplay -nosplash -r "matlabDemo"
+   mpirun -np 1 matlab -nojvm -nodisplay -nosplash -r "matlabDemo"
+
+
