@@ -37,4 +37,5 @@
    LD_PRELOAD="/usr/lib64/libslurm.so /apps/gcc/gcc-6.1.0/lib64/libstdc++.so.6" \
    mpirun -np 1 matlab -nojvm -nodisplay -nosplash -r "matlabDemo"
 
-
+TODO
+    1. Avoid the need for spawn using MPMD paradim via $ mpirun -np x program1 : -np y program2
