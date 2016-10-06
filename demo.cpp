@@ -15,7 +15,7 @@
  ********************************************************************/
 #include <mex.h>   
 #include <iostream>
-
+#include <unistd.h>
 #include <mpi.h>
 
 #ifdef PERF_METRIC
@@ -101,6 +101,10 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
                 "mpi_size must be greater than 0!");
         return;
     }
+
+    char name[256];
+    gethostname(name, 256);
+    mexPrintf("[manager]Runing on node %s\n", name);
 
    /*  
     * Now spawn the workers. Note that there is a run-time determination 

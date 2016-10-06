@@ -4,6 +4,7 @@
 #include <iostream>
 #include <fstream>
 #include <sstream>
+#include <unistd.h>
 
 using namespace std;
 
@@ -36,6 +37,11 @@ int main(int argc, char *argv[])
 
    MPI_Comm_size(MPI_COMM_WORLD,&mpi_size);
    MPI_Comm_rank(MPI_COMM_WORLD,&rank);
+
+char name[256];
+gethostname(name, 256);
+cout << "[worker" << rank << "]Runing on node " << name << endl;
+
 
 #ifdef DEBUG
     std::stringstream ss;
