@@ -92,7 +92,7 @@ hostname:
 run:
 	LD_LIBRARY_PATH=$$LD_LIBRARY_PATH:$(mpi_library) \
 	$(PRELOAD) \
-	mpirun -np 1 -hostfile my_hosts matlab -nojvm -nodisplay -nosplash -r "matlabDemo"
+	mpirun -np 1 -hostfile my_hosts matlab -nojvm -nodisplay -nosplash -r "matlabDemo; exit"
 
 distclean: clean
 

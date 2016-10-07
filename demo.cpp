@@ -69,10 +69,12 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
          return;
     }
 
-    mpi_check(MPI_Init(NULL, NULL));
+    int err = MPI_Init(NULL, NULL);
+    mpi_check(err);
 
     int  mpi_size;
-    MPI_Comm_size(MPI_COMM_WORLD, &mpi_size);
+    err = MPI_Comm_size(MPI_COMM_WORLD, &mpi_size);
+    mpi_check(err);
 
     if (mpi_size != 1)
     {
@@ -81,11 +83,6 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
         return;
     } 
 
-    int worker_size; 
-    MPI_Comm everyone_comm;  //intercommunicator to workers
-    const char* worker_program = "./worker"; //name of worker binary
-    //char worker_args[] = ["100", "10"];
-    
     //make sure the worker_size argument is scalar
     if( !mxIsDouble(prhs[2]) || mxGetNumberOfElements(prhs[2]) != 1 ) {
         mexErrMsgIdAndTxt("MyToolbox:arrayProduct:notScalar",
@@ -94,7 +91,7 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
     }
 
     //get size of the worker pool
-    worker_size = (int)mxGetScalar(prhs[2]);
+    int worker_size = (int)mxGetScalar(prhs[2]);
     if (worker_size < 1)
     {
         mexErrMsgIdAndTxt("MyToolbox:arrayProduct:mpiSize",
@@ -114,18 +111,21 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
     * first started, it is generally better to start them all at once 
     * in a single MPI_COMM_WORLD.  
     */ 
-     
-   MPI_Info host_info = MPI_INFO_NULL;
-   // MPI_Info_create(&host_info); 
-   // MPI_Info_set(host_info, "host", "icsnode13,icsnode15");
+    MPI_Comm everyone_comm;  //intercommunicator to workers
+    const char* worker_program = "./worker"; //name of worker binary
+    //char worker_args[] = ["100", "10"];
+    MPI_Info host_info = MPI_INFO_NULL;
+    // MPI_Info_create(&host_info); 
+    // MPI_Info_set(host_info, "host", "icsnode13,icsnode15");
  
-   MPI_Comm_spawn(worker_program, MPI_ARGV_NULL, worker_size,  
-             host_info, 0, MPI_COMM_SELF, &everyone_comm,  
-             MPI_ERRCODES_IGNORE);
+    err = MPI_Comm_spawn(worker_program, MPI_ARGV_NULL, worker_size,  
+                         host_info, 0, MPI_COMM_SELF, &everyone_comm,  
+                          MPI_ERRCODES_IGNORE);
+    mpi_check(err);
 
-   int size_all;
-   MPI_Comm_remote_size(everyone_comm,&size_all);
-
+    int size_all;
+    err = MPI_Comm_remote_size(everyone_comm,&size_all);
+    mpi_check(err);
 
   /* 
     * Parallel code here. The communicator "everyone_comm" can be used 
@@ -134,7 +134,27 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
     * "everyone_comm". 
     */
 
-    //declare MEX variables
+  /* 
+    * We however merge the parent and child communicators 
+    * so that there is only one communicator containing
+    * parend and all the worker processes. We will put    
+    * parent in front of the workers, so he will have 
+    * rank 0.
+    */    
+
+    MPI_Comm my_world_comm;
+    err = MPI_Intercomm_merge(everyone_comm, 0, &my_world_comm);
+    mpi_check(err);
+    
+   int rank_new, mpi_size_new;  
+   err = MPI_Comm_size(my_world_comm, &mpi_size_new);
+   mpi_check(err);
+   err = MPI_Comm_rank(my_world_comm, &rank_new);
+   mpi_check(err);
+
+   mexPrintf("[manager]my rank is %d and size is %d->%d\n", rank_new, mpi_size, mpi_size_new);
+   
+   //declare MEX variables
     mxArray *c_out_m;
     const mwSize *dims;
     double *a, *b, *c;
@@ -234,8 +254,10 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
     mexPrintf("Parallel Elapsed time: %f seconds\n", finish-start); 
 #endif
     
-    MPI_Finalize();
+    MPI_Comm_disconnect(&everyone_comm);
+    MPI_Comm_free(&my_world_comm);
 
+    MPI_Finalize();
 
     return;
 }
