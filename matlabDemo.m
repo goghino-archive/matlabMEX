@@ -1,17 +1,23 @@
-%compile demo.cpp file using default options:
-%mex demo.cpp
-%or use Makefile to get fine-grained control over
-%compiler selection and passed flags
+%% Matlab using parallel MPI solver
+% The demo() function is a mex function which spawns new processes,
+% distributes the matrices A,B and computes the operations on them locally.
+% The result is then reduced to master process running mexFunction() and 
+% returned to user.
 
-a=[1 1 1; 3 3 3];
-b=[2 2 2; 0 0 0];
-
-a = 3*eye(11);
-b = 2*eye(11);
+%%
+N = 10;
+a = 2*triu(ones(N));
+b = 3*a';
 
 %call mex function
-mpi_size = 1;
+mpi_size = 2;
 [c] = demo(a,b,mpi_size)
+
+if sum(sum((c - (a+b)))) == 0
+    disp('Correct');
+else
+    disp('Error');
+end
 
 %run matlab from terminal at mac
 %$ /Applications/MATLAB_R2014b.app/bin/matlab -nojvm -nodisplay -nosplash
