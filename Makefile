@@ -48,18 +48,9 @@ mpi_library = $(mpi_base)/lib
 
 
 CXX         = g++
-CXXFLAGS    = -g -fPIC -fopenmp -m64 -DIPOPT_BUILD -DMATLAB_MEXFILE # -DMWINDEXISINT
+CXXFLAGS    = -O2 -fPIC -fopenmp -m64 -DIPOPT_BUILD -DMATLAB_MEXFILE # -DMWINDEXISINT
 CXXFLAGS   += -I$(mpi_base)/include -pthread
-LFLAGS     = -L$(mpi_library)
-
-#provide necessary libraries to statically link with MPI (libmpi.a and its helpers)
-LIBS_STATIC        =  -lmpi
-LIBS_STATIC        += -lopen-rte #MPI helpers
-LIBS_STATIC        += -lopen-pal #MPI helpers
-LIBS_STATIC        += -lrt #some system utils
-LIBS_STATIC        += -libverbs #some system utils
-LIBS_STATIC        += -lnuma #???some Linux libs do not have static versions(e.g., libnuma)
-LIBS_STATIC        += -lutil #some dependency from open-pal
+LFLAGS      = -L$(mpi_library)
 
 CYGPATH_W = echo
 
@@ -104,9 +95,6 @@ run:
 	mpirun -np 1 -hostfile my_hosts matlab -nojvm -nodisplay -nosplash -r "matlabDemo"
 
 distclean: clean
-
-GM_ADD_LIBS_STATIC = 
-#GM_ADD_LIBS_STATIC = GM_ADD_LIBS="-static $$GM_ADD_LIBS";
 
 # make mexopts applies a set of fixes to mexopts.sh on Mac,
 # or mexopts.bat on Windows (if that file was generated
