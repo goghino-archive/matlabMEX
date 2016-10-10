@@ -18,6 +18,12 @@ HOST=$(shell hostname)
 ifeq ($(HOST),archimedes)
 mpi_base = /home/kardos/openmpi
 MATLAB_HOME = /opt/MATLAB/R2014b
+else ifeq ($(HOST),pilatus01)
+mpi_base = $(OPENMPI_DIR)
+MATLAB_HOME = /apps/pilatus/matlab/r2016a
+LIB_SLURM = -L/apps/pilatus/slurm/default/lib/ -lslurm
+#PRELOAD = LD_PRELOAD="/usr/lib64/libslurm.so"
+PRELOAD = LD_PRELOAD="/apps/pilatus/slurm/default/lib/libslurm.so /usr/lib64/libstdc++.so.6"
 else
 mpi_base = $(OPENMPI_DIR)
 MATLAB_HOME = /apps/matlab/R2016a
@@ -26,6 +32,7 @@ PRELOAD = LD_PRELOAD="/usr/lib64/libslurm.so"
 #PRELOAD = LD_PRELOAD="/usr/lib64/libslurm.so /apps/gcc/gcc-6.1.0/lib64/libstdc++.so.6"
 #also modify matlab's .rc script $vim ~/.matlab7rc.sh and
 #set up LDPATH_PREFIX='/apps/gcc/gcc-6.1.0/lib64/'
+HOSTFILES= -hostfile my_hosts
 endif
 
 # Set the suffix for matlab mex files. The contents of the
@@ -72,7 +79,7 @@ $(TARGET): $(OBJS)
 	$(MEX) -L${mpi_library} -g $(MEXFLAGS) -output $@ $^ -lmpi $(LIB_SLURM)
 
 worker: worker.cpp
-	$(CXX) $(CXXFLAGS) $(LFLAGS) -std=c++11 -O3 -Wall -W  -I. -o worker worker.cpp -lmpi
+	$(CXX) $(CXXFLAGS) $(LFLAGS) -O3 -Wall -W  -I. -o worker worker.cpp -lmpi
 
 
 %.o: %.cpp
@@ -92,7 +99,7 @@ hostname:
 run:
 	LD_LIBRARY_PATH=$$LD_LIBRARY_PATH:$(mpi_library) \
 	$(PRELOAD) \
-	mpirun -np 1 -hostfile my_hosts matlab -nojvm -nodisplay -nosplash -r "matlabDemo; exit"
+	mpirun ${HOSTFILES} -np 1 matlab -nojvm -nodisplay -nosplash -r "matlabDemo; exit"
 
 distclean: clean
 
