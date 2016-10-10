@@ -1,0 +1,12 @@
+#!/bin/bash -l
+#SBATCH --nodes=2
+#SBATCH --ntasks-per-node=32
+#SBATCH --time=00:30:00
+
+module use --append /users/drosos/privatemodules
+module load openmpi/2.0.1
+module load matlab
+
+LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/users/drosos/privateapps/openmpi/2.0.1/lib \
+LD_PRELOAD="/apps/pilatus/slurm/default/lib/libslurm.so /usr/lib64/libstdc++.so.6" \
+mpirun  -np 1 matlab -nojvm -nodisplay -nosplash -r "matlabDemo; exit" 
