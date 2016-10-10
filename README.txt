@@ -1,4 +1,8 @@
-1. kardos@icsmaster01 (master):~/misc/matlabMEX$ module list
+1. drosos@pilatus01:~/matlabMEX $ module list
+   Currently Loaded Modulefiles:
+   1) slurm          2) pilatus        3) matlab/r2016a  4) openmpi/2.0.1 
+
+   kardos@icsmaster01 (master):~/misc/matlabMEX$ module list
    Currently Loaded Modulefiles:
      1) use.own         2) gcc/6.1.0       3) openmpi/2.0.1   4) matlab/R2016a
 
